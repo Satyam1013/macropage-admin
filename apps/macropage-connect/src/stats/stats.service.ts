@@ -2,36 +2,36 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
-  Customer,
-  CustomerDocument,
-} from '../customers/schemas/customer.schema';
+  ExternalUser,
+  ExternalUserDocument,
+} from '../external/schemas/user.schema';
 import {
-  CustomerPlan,
-  CustomerPlanDocument,
-} from '../plans/schemas/customer-plan.schema';
+  ExternalSubscription,
+  ExternalSubscriptionDocument,
+} from '../external/schemas/subscription.schema';
 import { MessagesService } from '../messages/messages.service';
 
 @Injectable()
 export class StatsService {
   constructor(
-    @InjectModel(Customer.name)
-    private readonly customerModel: Model<CustomerDocument>,
-    @InjectModel(CustomerPlan.name)
-    private readonly customerPlanModel: Model<CustomerPlanDocument>,
+    @InjectModel(ExternalUser.name)
+    private readonly userModel: Model<ExternalUserDocument>,
+    @InjectModel(ExternalSubscription.name)
+    private readonly subscriptionModel: Model<ExternalSubscriptionDocument>,
     private readonly messagesService: MessagesService,
   ) {}
 
   async getDashboard() {
-    const [totalCustomers, enrolledCustomerIds, globalStats] =
+    const [totalCustomers, totalEnrolledCustomers, globalStats] =
       await Promise.all([
-        this.customerModel.countDocuments(),
-        this.customerPlanModel.distinct('customerId', { status: 'active' }),
+        this.userModel.countDocuments({ role: 'OWNER' }),
+        this.subscriptionModel.countDocuments({ status: 'ACTIVE' }),
         this.messagesService.getTodayGlobalStats(),
       ]);
 
     return {
       totalCustomers,
-      totalEnrolledCustomers: enrolledCustomerIds.length,
+      totalEnrolledCustomers,
       messagesSentToday: globalStats.sentToday,
       messagesFailedToday: globalStats.failedToday,
     };

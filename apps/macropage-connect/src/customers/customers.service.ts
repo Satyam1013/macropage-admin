@@ -2,63 +2,64 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { QueryFilter, Model } from 'mongoose';
 import { paginate } from '@app/common';
-import { Customer, CustomerDocument } from './schemas/customer.schema';
-import { CreateCustomerDto } from './dto/create-customer.dto';
-import { UpdateCustomerDto } from './dto/update-customer.dto';
+import {
+  ExternalUser,
+  ExternalUserDocument,
+} from '../external/schemas/user.schema';
 import { QueryCustomersDto } from './dto/query-customers.dto';
 import { PlansService } from '../plans/plans.service';
 import { MessagesService } from '../messages/messages.service';
+import { TagsService } from '../tags/tags.service';
 
+/** Never let auth secrets from the real `users` collection leak through this API. */
+const SAFE_PROJECTION =
+  '-password -twoFactorSecret -backupCodes -emailVerifyToken -emailVerifyExpires';
+
+/** A "customer" is a tenant account: a `users` doc with role OWNER. Read-only — tenants are created via the product's own signup flow. */
 @Injectable()
 export class CustomersService {
   constructor(
-    @InjectModel(Customer.name)
-    private readonly customerModel: Model<CustomerDocument>,
+    @InjectModel(ExternalUser.name)
+    private readonly userModel: Model<ExternalUserDocument>,
     private readonly plansService: PlansService,
     private readonly messagesService: MessagesService,
+    private readonly tagsService: TagsService,
   ) {}
 
-  create(dto: CreateCustomerDto) {
-    return this.customerModel.create(dto);
-  }
+  async findAll(query: QueryCustomersDto) {
+    const { page = 1, limit = 20, search, billingPlan, tagId } = query;
 
-  findAll(query: QueryCustomersDto) {
-    const { page = 1, limit = 20, search, status, tagId } = query;
-
-    const filter: QueryFilter<CustomerDocument> = {};
+    const filter: QueryFilter<ExternalUserDocument> = { role: 'OWNER' };
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { phone: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
+        { company: { $regex: search, $options: 'i' } },
       ];
     }
-    if (status) filter.status = status;
-    if (tagId) filter.tagIds = tagId;
+    if (billingPlan) filter.billingPlan = billingPlan;
+    if (tagId) {
+      const customerIds = await this.tagsService.getCustomerIdsForTags([
+        tagId,
+      ]);
+      filter._id = { $in: customerIds };
+    }
 
-    return paginate(this.customerModel, filter, page, limit);
+    return paginate(
+      this.userModel,
+      filter,
+      page,
+      limit,
+      { createdAt: -1 },
+      SAFE_PROJECTION,
+    );
   }
 
   async findOne(id: string) {
-    const customer = await this.customerModel.findById(id).exec();
-    if (!customer) {
-      throw new NotFoundException('Customer not found');
-    }
-    return customer;
-  }
-
-  async update(id: string, dto: UpdateCustomerDto) {
-    const customer = await this.customerModel
-      .findByIdAndUpdate(id, dto, { new: true })
+    const customer = await this.userModel
+      .findOne({ _id: id, role: 'OWNER' }, SAFE_PROJECTION)
       .exec();
-    if (!customer) {
-      throw new NotFoundException('Customer not found');
-    }
-    return customer;
-  }
-
-  async remove(id: string) {
-    const customer = await this.customerModel.findByIdAndDelete(id).exec();
     if (!customer) {
       throw new NotFoundException('Customer not found');
     }
@@ -67,22 +68,21 @@ export class CustomersService {
 
   async getProfile(id: string) {
     const customer = await this.findOne(id);
+    const tenantId = customer.tenantId ?? customer.id;
 
-    const [planHistory, messageStats] = await Promise.all([
-      this.plansService.getHistoryForCustomer(id),
-      this.messagesService.getStatsForCustomer(id),
+    const [currentPlan, planHistory, messageStats, tags] = await Promise.all([
+      this.plansService.getCurrentSubscription(tenantId),
+      this.plansService.getPaymentHistory(tenantId),
+      this.messagesService.getStatsForCustomer(tenantId),
+      this.tagsService.findTagsForCustomer(id),
     ]);
-
-    const currentPlan =
-      planHistory.find((p) => p.status === 'active') ??
-      planHistory[0] ??
-      null;
 
     return {
       customer,
       currentPlan,
       planHistory,
       messageStats,
+      tags,
     };
   }
 }

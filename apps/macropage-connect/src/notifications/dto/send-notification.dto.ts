@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsMongoId, IsString } from 'class-validator';
-import type { NotificationChannel } from '../schemas/notification.schema';
+import type { BroadcastChannel } from '../schemas/admin-broadcast.schema';
 
 export class SendNotificationDto {
   @IsString()
@@ -8,8 +8,8 @@ export class SendNotificationDto {
   @IsString()
   body: string;
 
-  @IsEnum(['whatsapp', 'sms'])
-  channel: NotificationChannel;
+  @IsEnum(['in_app', 'whatsapp'])
+  channel: BroadcastChannel;
 
   @IsEnum(['tag', 'customer'])
   targetType: 'tag' | 'customer';

@@ -1,5 +1,5 @@
 import { IsEnum, IsString } from 'class-validator';
-import type { NotificationChannel } from '../schemas/notification.schema';
+import type { BroadcastChannel } from '../schemas/admin-broadcast.schema';
 
 export class BroadcastNotificationDto {
   @IsString()
@@ -8,6 +8,6 @@ export class BroadcastNotificationDto {
   @IsString()
   body: string;
 
-  @IsEnum(['whatsapp', 'sms'])
-  channel: NotificationChannel;
+  @IsEnum(['in_app', 'whatsapp'])
+  channel: BroadcastChannel;
 }

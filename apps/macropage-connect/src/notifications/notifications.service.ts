@@ -2,43 +2,49 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
-  Notification,
-  NotificationDocument,
-  NotificationChannel,
-} from './schemas/notification.schema';
+  AdminBroadcast,
+  AdminBroadcastDocument,
+  BroadcastChannel,
+} from './schemas/admin-broadcast.schema';
 import {
-  Customer,
-  CustomerDocument,
-} from '../customers/schemas/customer.schema';
+  ExternalUser,
+  ExternalUserDocument,
+} from '../external/schemas/user.schema';
+import {
+  ExternalNotification,
+  ExternalNotificationDocument,
+} from '../external/schemas/notification.schema';
 import { WhatsappTwilioProvider } from './providers/whatsapp-twilio.provider';
-import { MessagesService } from '../messages/messages.service';
+import { TagsService } from '../tags/tags.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { SendNotificationDto } from './dto/send-notification.dto';
 
 interface DispatchParams {
   title: string;
   body: string;
-  channel: NotificationChannel;
+  channel: BroadcastChannel;
   targetType: 'all' | 'tag' | 'customer';
   targetIds: string[];
-  customers: CustomerDocument[];
+  customers: ExternalUserDocument[];
 }
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectModel(Notification.name)
-    private readonly notificationModel: Model<NotificationDocument>,
-    @InjectModel(Customer.name)
-    private readonly customerModel: Model<CustomerDocument>,
+    @InjectModel(AdminBroadcast.name)
+    private readonly broadcastModel: Model<AdminBroadcastDocument>,
+    @InjectModel(ExternalUser.name)
+    private readonly userModel: Model<ExternalUserDocument>,
+    @InjectModel(ExternalNotification.name)
+    private readonly notificationModel: Model<ExternalNotificationDocument>,
     private readonly whatsappProvider: WhatsappTwilioProvider,
-    private readonly messagesService: MessagesService,
+    private readonly tagsService: TagsService,
   ) {}
 
   private async dispatch(params: DispatchParams) {
     const { title, body, channel, targetType, targetIds, customers } = params;
 
-    const notification = await this.notificationModel.create({
+    const broadcast = await this.broadcastModel.create({
       title,
       body,
       channel,
@@ -52,35 +58,38 @@ export class NotificationsService {
     let failed = 0;
 
     for (const customer of customers) {
-      const result =
-        channel === 'whatsapp'
-          ? await this.whatsappProvider.send(customer.phone, body)
-          : { success: false, error: 'SMS provider not configured' };
+      let success: boolean;
 
-      if (result.success) {
-        sent += 1;
+      if (channel === 'in_app') {
+        const tenantId = customer.tenantId ?? customer.id;
+        await this.notificationModel.create({
+          tenantId,
+          userId: customer.id,
+          type: 'admin_broadcast',
+          title,
+          body,
+          data: { broadcastId: broadcast.id },
+        });
+        success = true;
+      } else if (customer.phone) {
+        const result = await this.whatsappProvider.send(customer.phone, body);
+        success = result.success;
       } else {
-        failed += 1;
+        success = false;
       }
 
-      await this.messagesService.logMessage({
-        customerId: customer._id,
-        channel,
-        status: result.success ? 'sent' : 'failed',
-        errorReason: result.error,
-      });
+      if (success) sent += 1;
+      else failed += 1;
     }
 
-    notification.stats = { sent, failed };
-    await notification.save();
+    broadcast.stats = { sent, failed };
+    await broadcast.save();
 
-    return notification;
+    return broadcast;
   }
 
   async broadcastToAll(dto: BroadcastNotificationDto) {
-    const customers = await this.customerModel
-      .find({ status: 'active' })
-      .exec();
+    const customers = await this.userModel.find({ role: 'OWNER' }).exec();
 
     return this.dispatch({
       title: dto.title,
@@ -93,14 +102,14 @@ export class NotificationsService {
   }
 
   async sendToTargets(dto: SendNotificationDto) {
-    const customers =
+    const customerIds =
       dto.targetType === 'tag'
-        ? await this.customerModel
-            .find({ tagIds: { $in: dto.targetIds } })
-            .exec()
-        : await this.customerModel
-            .find({ _id: { $in: dto.targetIds } })
-            .exec();
+        ? await this.tagsService.getCustomerIdsForTags(dto.targetIds)
+        : dto.targetIds;
+
+    const customers = await this.userModel
+      .find({ _id: { $in: customerIds }, role: 'OWNER' })
+      .exec();
 
     return this.dispatch({
       title: dto.title,
@@ -113,6 +122,6 @@ export class NotificationsService {
   }
 
   findAll() {
-    return this.notificationModel.find().sort({ sentAt: -1 }).exec();
+    return this.broadcastModel.find().sort({ sentAt: -1 }).exec();
   }
 }

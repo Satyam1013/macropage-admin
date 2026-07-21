@@ -1,15 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Template, TemplateDocument } from './schemas/template.schema';
+import {
+  NotificationTemplate,
+  NotificationTemplateDocument,
+} from './schemas/template.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 
 @Injectable()
 export class TemplatesService {
   constructor(
-    @InjectModel(Template.name)
-    private readonly templateModel: Model<TemplateDocument>,
+    @InjectModel(NotificationTemplate.name)
+    private readonly templateModel: Model<NotificationTemplateDocument>,
   ) {}
 
   create(dto: CreateTemplateDto) {

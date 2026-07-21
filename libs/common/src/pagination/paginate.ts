@@ -14,10 +14,16 @@ export async function paginate<T>(
   page: number,
   limit: number,
   sort: Record<string, 1 | -1> = { createdAt: -1 },
+  projection?: string,
 ): Promise<PaginatedResult<T>> {
   const skip = (page - 1) * limit;
   const [items, total] = await Promise.all([
-    model.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+    model
+      .find(filter, projection)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .exec(),
     model.countDocuments(filter).exec(),
   ]);
 

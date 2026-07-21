@@ -1,6 +1,6 @@
 import { IsDateString, IsEnum, IsMongoId, IsOptional } from 'class-validator';
 import { PaginationDto } from '@app/common';
-import type { MessageChannel, MessageStatus } from '../schemas/message-log.schema';
+import type { MessageStatus } from '../../external/schemas/message.schema';
 
 export class QueryMessageLogsDto extends PaginationDto {
   @IsOptional()
@@ -8,11 +8,7 @@ export class QueryMessageLogsDto extends PaginationDto {
   customerId?: string;
 
   @IsOptional()
-  @IsEnum(['whatsapp', 'sms'])
-  channel?: MessageChannel;
-
-  @IsOptional()
-  @IsEnum(['sent', 'failed'])
+  @IsEnum(['PENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED'])
   status?: MessageStatus;
 
   @IsOptional()

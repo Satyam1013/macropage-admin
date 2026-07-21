@@ -3,10 +3,16 @@ import { HydratedDocument } from 'mongoose';
 
 export type TemplateChannel = 'whatsapp' | 'sms' | 'push';
 
-export type TemplateDocument = HydratedDocument<Template>;
+export type NotificationTemplateDocument = HydratedDocument<NotificationTemplate>;
 
-@Schema({ timestamps: true })
-export class Template {
+/**
+ * Admin-authored notification/message templates. Deliberately a distinct
+ * collection ("notification_templates") — the real backend's "templates"
+ * collection holds Meta-approved WhatsApp Business templates, an unrelated
+ * live-data concept this app must not touch.
+ */
+@Schema({ timestamps: true, collection: 'notification_templates' })
+export class NotificationTemplate {
   @Prop({ required: true, trim: true })
   name: string;
 
@@ -23,4 +29,5 @@ export class Template {
   isActive: boolean;
 }
 
-export const TemplateSchema = SchemaFactory.createForClass(Template);
+export const NotificationTemplateSchema =
+  SchemaFactory.createForClass(NotificationTemplate);

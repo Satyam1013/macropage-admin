@@ -1,20 +1,28 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Notification, NotificationSchema } from './schemas/notification.schema';
-import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
+import {
+  AdminBroadcast,
+  AdminBroadcastSchema,
+} from './schemas/admin-broadcast.schema';
+import { ExternalUser, ExternalUserSchema } from '../external/schemas/user.schema';
+import {
+  ExternalNotification,
+  ExternalNotificationSchema,
+} from '../external/schemas/notification.schema';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { WhatsappTwilioProvider } from './providers/whatsapp-twilio.provider';
-import { MessagesModule } from '../messages/messages.module';
+import { TagsModule } from '../tags/tags.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Notification.name, schema: NotificationSchema },
-      { name: Customer.name, schema: CustomerSchema },
+      { name: AdminBroadcast.name, schema: AdminBroadcastSchema },
+      { name: ExternalUser.name, schema: ExternalUserSchema },
+      { name: ExternalNotification.name, schema: ExternalNotificationSchema },
     ]),
-    MessagesModule,
+    TagsModule,
     ConfigModule,
   ],
   controllers: [NotificationsController],

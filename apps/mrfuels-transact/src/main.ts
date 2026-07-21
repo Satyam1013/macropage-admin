@@ -1,8 +1,25 @@
 import { NestFactory } from '@nestjs/core';
-import { MrfuelsTransactModule } from './mrfuels-transact.module';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(MrfuelsTransactModule);
-  await app.listen(process.env.MRFUELS_TRANSACT_PORT ?? 3002);
+  const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  app.setGlobalPrefix('api');
+  app.enableCors();
+  app.useWebSocketAdapter(new IoAdapter(app));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
+
+  const port = configService.get<number>('MRFUELS_TRANSACT_PORT', 3002);
+  await app.listen(port);
 }
 bootstrap();

@@ -1,6 +1,6 @@
 import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from '@app/common';
-import type { CustomerStatus } from '../schemas/customer.schema';
+import type { BillingPlanKey } from '../../external/schemas/user.schema';
 
 export class QueryCustomersDto extends PaginationDto {
   @IsOptional()
@@ -8,8 +8,8 @@ export class QueryCustomersDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(['active', 'inactive', 'blocked'])
-  status?: CustomerStatus;
+  @IsEnum(['TRIAL', 'STARTER', 'GROWTH', 'BUSINESS', 'ENTERPRISE'])
+  billingPlan?: BillingPlanKey;
 
   @IsOptional()
   @IsMongoId()
