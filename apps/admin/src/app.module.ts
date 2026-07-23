@@ -8,7 +8,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { MacropageConnectModule } from './macropage-connect/macropage-connect.module';
 import { MrFuelsModule } from './mr-fuels/mr-fuels.module';
-import { MacropageModule } from './macropage/macropage.module';
+import { MacropagePortalModule } from './macropage-portal/macropage-portal.module';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { MacropageModule } from './macropage/macropage.module';
     AuthModule,
     MacropageConnectModule,
     MrFuelsModule,
-    MacropageModule,
+    MacropagePortalModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

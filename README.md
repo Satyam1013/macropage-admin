@@ -1,6 +1,6 @@
 # Macropage Admin
 
-A single NestJS app (Nest CLI monorepo mode, one project: `admin`). One process, one deployment, one login, connects to **both** product databases (macropage-connect + mr-fuels) at once via two Mongoose connections, and exposes everything under one URL: `/api/macropage-connect/*`, `/api/mr-fuels/*`, and `/api/macropage/*`.
+A single NestJS app (Nest CLI monorepo mode, one project: `admin`). One process, one deployment, one login, connects to **both** product databases (macropage-connect + mr-fuels) at once via two Mongoose connections, and exposes everything under one URL: `/api/macropage-connect/*`, `/api/mr-fuels/*`, and `/api/macropage-portal/*`.
 
 Shared code (filters, interceptors, decorators, pagination helper) lives in `libs/common`, importable as `@app/common`.
 
@@ -16,7 +16,7 @@ apps/admin/src/
 ├── mr-fuels/                    # everything mounted under /api/mr-fuels/*, models on the 'mrFuels' named connection
 │   ├── customers/ plans/ tags/ ads/ stats/ support/
 │   └── external/                # read-only mirrors of the real mr-fuels backend's schemas
-└── macropage/                   # mounted under /api/macropage — placeholder (static site), not yet built out, public (no auth)
+└── macropage-portal/            # mounted under /api/macropage-portal — placeholder (static site), not yet built out, public (no auth)
 ```
 
 One JWT (from `POST /api/auth/login`) works for every route in both namespaces.
@@ -96,7 +96,7 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 | `stats` | `/stats/dashboard` | Totals from `admins`/`subscriptions`. |
 | `support/tickets`, `support/chat` | `/support/tickets`, Socket.io `/mr-fuels/support-chat` | Admin-owned. |
 
-## Modules — macropage (`/api/macropage`)
+## Modules — macropage-portal (`/api/macropage-portal`)
 
 Placeholder — static-site stub, no DB, public (`@Public()`, no JWT required). Not yet built out.
 
