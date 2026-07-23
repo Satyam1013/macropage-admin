@@ -1,22 +1,22 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/macropage-connect/src",
+  "sourceRoot": "apps/admin/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/macropage-connect/tsconfig.app.json"
+    "tsConfigPath": "apps/admin/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/macropage-connect",
+  "root": "apps/admin",
   "projects": {
-    "macropage-connect": {
+    "admin": {
       "type": "application",
-      "root": "apps/macropage-connect",
+      "root": "apps/admin",
       "entryFile": "main",
-      "sourceRoot": "apps/macropage-connect/src",
+      "sourceRoot": "apps/admin/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/macropage-connect/tsconfig.app.json"
+        "tsConfigPath": "apps/admin/tsconfig.app.json"
       }
     },
     "macropage": {
@@ -26,15 +26,6 @@
       "sourceRoot": "apps/macropage/src",
       "compilerOptions": {
         "tsConfigPath": "apps/macropage/tsconfig.app.json"
-      }
-    },
-    "mrfuels-transact": {
-      "type": "application",
-      "root": "apps/mrfuels-transact",
-      "entryFile": "main",
-      "sourceRoot": "apps/mrfuels-transact/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/mrfuels-transact/tsconfig.app.json"
       }
     },
     "common": {

@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import {
   AdminUser,
   AdminUserSchema,
-} from '../apps/macropage-connect/src/auth/schemas/admin-user.schema';
+} from '../apps/admin/src/auth/schemas/admin-user.schema';
 
 async function seed() {
   const mongoUri = process.env.MACROPAGE_CONNECT_MONGODB_URI;
