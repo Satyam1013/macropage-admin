@@ -1,9 +1,6 @@
 # Macropage Admin
 
-NestJS monorepo (Nest CLI monorepo mode) with two apps:
-
-- **`admin`** — the unified admin backend. One process, one deployment, one login, connects to **both** product databases (macropage-connect + mr-fuels) at once via two Mongoose connections, and exposes both under one URL: `/api/macropage-connect/*` and `/api/mr-fuels/*`.
-- **`macropage`** — placeholder app (static site), not yet built out.
+A single NestJS app (Nest CLI monorepo mode, one project: `admin`). One process, one deployment, one login, connects to **both** product databases (macropage-connect + mr-fuels) at once via two Mongoose connections, and exposes everything under one URL: `/api/macropage-connect/*`, `/api/mr-fuels/*`, and `/api/macropage/*`.
 
 Shared code (filters, interceptors, decorators, pagination helper) lives in `libs/common`, importable as `@app/common`.
 
@@ -12,13 +9,14 @@ Shared code (filters, interceptors, decorators, pagination helper) lives in `lib
 ```
 apps/admin/src/
 ├── main.ts, app.module.ts       # dual MongooseModule.forRootAsync: default connection = macropage-connect DB, named 'mrFuels' connection = mr-fuels DB
-├── auth/                        # SHARED login for both products — one `adminusers` collection, lives in the macropage-connect (default) DB
+├── auth/                        # SHARED login for all namespaces — one `adminusers` collection, lives in the macropage-connect (default) DB
 ├── macropage-connect/           # everything mounted under /api/macropage-connect/*, models on the default connection
 │   ├── customers/ plans/ messages/ tags/ templates/ notifications/ ads/ stats/ support/ help/ upload/
 │   └── external/                # read-only mirrors of the real macropage-connect backend's schemas
-└── mr-fuels/                    # everything mounted under /api/mr-fuels/*, models on the 'mrFuels' named connection
-    ├── customers/ plans/ tags/ ads/ stats/ support/
-    └── external/                # read-only mirrors of the real mr-fuels backend's schemas
+├── mr-fuels/                    # everything mounted under /api/mr-fuels/*, models on the 'mrFuels' named connection
+│   ├── customers/ plans/ tags/ ads/ stats/ support/
+│   └── external/                # read-only mirrors of the real mr-fuels backend's schemas
+└── macropage/                   # mounted under /api/macropage — placeholder (static site), not yet built out, public (no auth)
 ```
 
 One JWT (from `POST /api/auth/login`) works for every route in both namespaces.
@@ -98,9 +96,13 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 | `stats` | `/stats/dashboard` | Totals from `admins`/`subscriptions`. |
 | `support/tickets`, `support/chat` | `/support/tickets`, Socket.io `/mr-fuels/support-chat` | Admin-owned. |
 
+## Modules — macropage (`/api/macropage`)
+
+Placeholder — static-site stub, no DB, public (`@Public()`, no JWT required). Not yet built out.
+
 ## Scripts
 
-- `npm run build` / `build:admin` / `build:macropage` / `build:all`
-- `npm run start:dev:admin` / `start:dev:macropage`
+- `npm run build` / `build:admin`
+- `npm run start:dev:admin`
 - `npm run seed:admin` — upserts the one shared admin user from `.env` (`ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_NAME`)
 - `npm run lint`, `npm test`

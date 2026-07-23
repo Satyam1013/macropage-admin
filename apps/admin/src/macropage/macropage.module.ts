@@ -3,7 +3,6 @@ import { MacropageController } from './macropage.controller';
 import { MacropageService } from './macropage.service';
 
 @Module({
-  imports: [],
   controllers: [MacropageController],
   providers: [MacropageService],
 })
