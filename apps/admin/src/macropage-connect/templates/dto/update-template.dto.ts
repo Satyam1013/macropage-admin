@@ -1,38 +1,4 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsEnum,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-import type {
-  TemplateCategory,
-  TemplateChannel,
-} from '../schemas/template.schema';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateTemplateDto } from './create-template.dto';
 
-export class UpdateTemplateDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsEnum(['whatsapp', 'sms', 'push'])
-  channel?: TemplateChannel;
-
-  @IsOptional()
-  @IsEnum(['marketing', 'utility', 'authentication'])
-  category?: TemplateCategory;
-
-  @IsOptional()
-  @IsString()
-  content?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  variables?: string[];
-
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-}
+export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {}

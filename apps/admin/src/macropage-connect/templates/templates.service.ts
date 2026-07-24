@@ -54,7 +54,7 @@ export class TemplatesService {
     variables: Record<string, string>,
   ): Promise<string> {
     const template = await this.findOne(templateId);
-    return template.content.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) =>
+    return template.body.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) =>
       Object.prototype.hasOwnProperty.call(variables, key)
         ? variables[key]
         : match,
