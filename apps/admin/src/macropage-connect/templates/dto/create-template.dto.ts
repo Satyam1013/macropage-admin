@@ -9,13 +9,13 @@ import type { TemplateChannel } from '../schemas/template.schema';
 
 export class CreateTemplateDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsEnum(['whatsapp', 'sms', 'push'])
-  channel: TemplateChannel;
+  channel!: TemplateChannel;
 
   @IsString()
-  content: string;
+  content!: string;
 
   @IsOptional()
   @IsArray()
