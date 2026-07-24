@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
 export type TemplateChannel = 'whatsapp' | 'sms' | 'push';
+export type TemplateCategory = 'marketing' | 'utility' | 'authentication';
 
 export type NotificationTemplateDocument = HydratedDocument<NotificationTemplate>;
 
@@ -20,6 +21,12 @@ export class NotificationTemplate {
 
   @Prop({ required: true, enum: ['whatsapp', 'sms', 'push'] })
   channel: TemplateChannel;
+
+  @Prop({
+    required: true,
+    enum: ['marketing', 'utility', 'authentication'],
+  })
+  category: TemplateCategory;
 
   @Prop({ required: true })
   content: string;

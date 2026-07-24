@@ -5,7 +5,10 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import type { TemplateChannel } from '../schemas/template.schema';
+import type {
+  TemplateCategory,
+  TemplateChannel,
+} from '../schemas/template.schema';
 
 export class CreateTemplateDto {
   @IsString()
@@ -13,6 +16,9 @@ export class CreateTemplateDto {
 
   @IsEnum(['whatsapp', 'sms', 'push'])
   channel!: TemplateChannel;
+
+  @IsEnum(['marketing', 'utility', 'authentication'])
+  category!: TemplateCategory;
 
   @IsString()
   content!: string;
