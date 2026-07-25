@@ -77,12 +77,13 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 | `plans` | `/plans`, `/plans/customer/:tenantId`, `/plans/customer/:tenantId/current` | Hardcoded portal pricing catalog + read-only over real `subscriptions`/`payments`. |
 | `messages` | `/messages/logs`, `/messages/stats` | Read-only over real `messages`, `direction: OUTBOUND`; day/month/custom-range stats. |
 | `tags` | `/tags`, `/tags/assign` | Admin-owned. |
-| `templates` | `/templates` | Admin-owned `notification_templates`. |
+| `templates` | `/templates` | Admin-owned `sampletemplates` — shape mirrors real WhatsApp templates (category/language/header/body/footer/buttons/sampleVariables), distinct from the real live `templates` collection. |
 | `notifications` | `/notifications/broadcast`, `/notifications/send` | `in_app` writes into real `notifications`; `whatsapp` sends via Twilio. |
 | `ads` | `/ads`, `/ads/active` | Admin-owned popups/banners. |
 | `stats` | `/stats/dashboard` | Totals + message counts. |
 | `help/docs`, `help/faqs` | `/help/docs`, `/help/faqs` | Full CRUD over the real, live self-serve help-center collections. |
 | `upload` | `POST /upload/tutorial` | Uploads media to DO Spaces, returns a public URL. |
+| `integration-platforms` | `/integration-platforms`, `/integration-platforms/:id`, `PATCH /integration-platforms/:id/status` | Admin-owned `integrationplatforms` — third-party platforms (Shopify, Zapier, etc.) shown to tenants in the real portal. The portal (separate repo) reads this same collection directly, same pattern as `sampletemplates`. |
 | `support/tickets`, `support/chat` | `/support/tickets`, Socket.io `/macropage-connect/support-chat` | Admin-owned. |
 
 ## Modules — mr-fuels (`/api/mr-fuels/*`)
@@ -105,4 +106,5 @@ Placeholder — static-site stub, no DB, public (`@Public()`, no JWT required). 
 - `npm run build` / `build:admin`
 - `npm run start:dev:admin`
 - `npm run seed:admin` — upserts the one shared admin user from `.env` (`ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_NAME`)
+- `npm run seed:integration-platforms` — idempotent upsert of the 8 starter integration platforms (safe to re-run, never resets an admin's status change)
 - `npm run lint`, `npm test`

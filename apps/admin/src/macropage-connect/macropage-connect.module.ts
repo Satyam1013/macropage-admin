@@ -10,6 +10,7 @@ import { StatsModule } from './stats/stats.module';
 import { SupportModule } from './support/support.module';
 import { HelpModule } from './help/help.module';
 import { UploadModule } from './upload/upload.module';
+import { IntegrationPlatformsModule } from './integration-platforms/integration-platforms.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UploadModule } from './upload/upload.module';
     SupportModule,
     HelpModule,
     UploadModule,
+    IntegrationPlatformsModule,
   ],
 })
 export class MacropageConnectModule {}
