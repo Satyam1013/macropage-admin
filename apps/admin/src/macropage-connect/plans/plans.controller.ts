@@ -1,5 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { PlansService } from './plans.service';
+import { UpdatePlanDto } from './dto/update-plan.dto';
 
 @Controller('macropage-connect/plans')
 export class PlansController {
@@ -8,6 +10,12 @@ export class PlansController {
   @Get()
   getCatalog() {
     return this.plansService.getCatalog();
+  }
+
+  @Patch(':planId')
+  @Roles('super-admin')
+  update(@Param('planId') planId: string, @Body() dto: UpdatePlanDto) {
+    return this.plansService.update(planId, dto);
   }
 
   @Get('customer/:tenantId')

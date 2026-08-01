@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { QueryFilter, Model } from 'mongoose';
 import { paginate } from '@app/common';
 import { Ticket, TicketDocument } from './schemas/ticket.schema';
-import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { QueryTicketsDto } from './dto/query-tickets.dto';
 
@@ -14,19 +13,13 @@ export class TicketsService {
     private readonly ticketModel: Model<TicketDocument>,
   ) {}
 
-  create(dto: CreateTicketDto) {
-    return this.ticketModel.create(dto);
-  }
-
   findAll(query: QueryTicketsDto) {
-    const { page = 1, limit = 20, status, priority, customerId, assignedTo } =
-      query;
+    const { page = 1, limit = 20, status, priority, tenantId } = query;
 
     const filter: QueryFilter<TicketDocument> = {};
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
-    if (customerId) filter.customerId = customerId;
-    if (assignedTo) filter.assignedTo = assignedTo;
+    if (tenantId) filter.tenantId = tenantId;
 
     return paginate(this.ticketModel, filter, page, limit);
   }
@@ -41,16 +34,12 @@ export class TicketsService {
 
   async update(id: string, dto: UpdateTicketDto) {
     const ticket = await this.ticketModel
-      .findByIdAndUpdate(id, dto, { new: true })
+      .findByIdAndUpdate(
+        id,
+        { $set: { status: dto.status } },
+        { new: true, runValidators: true },
+      )
       .exec();
-    if (!ticket) {
-      throw new NotFoundException('Ticket not found');
-    }
-    return ticket;
-  }
-
-  async remove(id: string) {
-    const ticket = await this.ticketModel.findByIdAndDelete(id).exec();
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
     }

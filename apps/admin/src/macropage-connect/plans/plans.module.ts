@@ -10,12 +10,17 @@ import {
 } from '../external/schemas/payment.schema';
 import { PlansService } from './plans.service';
 import { PlansController } from './plans.controller';
+import {
+  PlanOverride,
+  PlanOverrideSchema,
+} from './schemas/plan-override.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ExternalSubscription.name, schema: ExternalSubscriptionSchema },
       { name: ExternalPayment.name, schema: ExternalPaymentSchema },
+      { name: PlanOverride.name, schema: PlanOverrideSchema },
     ]),
   ],
   controllers: [PlansController],

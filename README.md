@@ -30,8 +30,8 @@ Neither product's MongoDB is dedicated to this admin panel — both are the **li
 A "customer" here is a tenant account: a `users` doc with `role: 'OWNER'`.
 
 - `macropage-connect/external/schemas/` mirrors the real `User`, `Subscription`, `Payment`, `Message`, `Notification` schemas. **Read-only** except `Notification` — admin broadcasts are inserted there so tenants see them in their existing in-app notification feed (`{ tenantId, userId }` shape, matches the real backend's query exactly).
-- Plan pricing (`plans/plans.catalog.ts`) mirrors the real portal's `PLAN_PRICING` (`billing.constants.ts`) exactly — the actual customer-facing pricing (monthly/quarterly/yearly, savings, badges, features), not the internal `billing/plans.config.ts` (Razorpay plan IDs only). Hardcoded — there is no "plans" DB collection. Keep in sync manually if the real portal's pricing changes.
-- `notification_templates`, `tags`, `ads`, `tickets`, `chatmessages`, `adminbroadcasts` are collections **owned by this admin app** — safe to write freely. `notification_templates` is deliberately distinct from the real `templates` collection (Meta-approved WhatsApp Business templates — never touch it).
+- Plan pricing starts from `plans/plans.catalog.ts`, which mirrors the real portal's `PLAN_PRICING` (`billing.constants.ts`). Super-admin edits are persisted separately in the admin-owned `adminplanoverrides` collection and are merged into the catalog response; no product-owned billing collection is changed.
+- `notification_templates`, `tags`, `ads`, `chatmessages`, `adminbroadcasts` are collections **owned by this admin app** — safe to write freely. `notification_templates` is deliberately distinct from the real `templates` collection (Meta-approved WhatsApp Business templates — never touch it).
 - `helpdocs`/`helpfaqs` (via the `help` module) **are** the real backend's live self-serve help-center collections — the admin app writes here directly (the real backend only ever exposed read endpoints for these).
 - `upload` writes tutorial media to the real product's own DigitalOcean Spaces bucket, under a distinct `admin-tutorials/` key prefix.
 - Customer tag membership lives on the `Tag` doc itself (`customerIds: string[]`), not on the real `users` doc.
@@ -74,7 +74,7 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 | Module | Routes | Notes |
 |---|---|---|
 | `customers` | `/customers`, `/customers/:id`, `/customers/:id/profile` | Read-only over real `users` (`role: OWNER`); profile aggregates subscription + payment history + message stats + tags. Auth fields always stripped. |
-| `plans` | `/plans`, `/plans/customer/:tenantId`, `/plans/customer/:tenantId/current` | Hardcoded portal pricing catalog + read-only over real `subscriptions`/`payments`. |
+| `plans` | `/plans`, `PATCH /plans/:planId`, `/plans/customer/:tenantId`, `/plans/customer/:tenantId/current` | Pricing catalog with super-admin persisted overrides; read-only over real `subscriptions`/`payments`. |
 | `messages` | `/messages/logs`, `/messages/stats` | Read-only over real `messages`, `direction: OUTBOUND`; day/month/custom-range stats. |
 | `tags` | `/tags`, `/tags/assign` | Admin-owned. |
 | `templates` | `/templates` | Admin-owned `sampletemplates` — shape mirrors real WhatsApp templates (category/language/header/body/footer/buttons/sampleVariables), distinct from the real live `templates` collection. |
@@ -84,7 +84,35 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 | `help/docs`, `help/faqs` | `/help/docs`, `/help/faqs` | Full CRUD over the real, live self-serve help-center collections. |
 | `upload` | `POST /upload/tutorial` | Uploads media to DO Spaces, returns a public URL. |
 | `integration-platforms` | `/integration-platforms`, `/integration-platforms/:id`, `PATCH /integration-platforms/:id/status` | Admin-owned `integrationplatforms` — third-party platforms (Shopify, Zapier, etc.) shown to tenants in the real portal. The portal (separate repo) reads this same collection directly, same pattern as `sampletemplates`. |
-| `support/tickets`, `support/chat` | `/support/tickets`, Socket.io `/macropage-connect/support-chat` | Admin-owned. |
+| `support/tickets`, `support/chat` | `GET /support/tickets`, `PATCH /support/tickets/:id`, Socket.io `/macropage-connect/support-chat` | Customer-raised product tickets are read from the live `tickets` collection. Super-admins and support agents can change only a ticket's status. |
+
+### Update a Macropage Connect plan
+
+`PATCH /api/macropage-connect/plans/:planId` accepts `STARTER`, `GROWTH`,
+`BUSINESS`, or `ENTERPRISE` as `planId` and requires a super-admin JWT. Nested
+pricing fields can be updated independently. The saved override is reflected by
+subsequent `GET /api/macropage-connect/plans` calls.
+
+```bash
+curl -X PATCH http://localhost:3000/api/macropage-connect/plans/GROWTH \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pricing":{"monthly":{"price":3999,"billedAs":"₹3,999/month"}},"badge":"Most Popular"}'
+```
+
+### Update a customer support ticket's status
+
+`PATCH /api/macropage-connect/support/tickets/:id` updates a real
+customer-raised ticket. Use the ticket `_id` returned by the product status
+endpoint. Allowed statuses are `OPEN`, `IN_PROGRESS`, `PENDING`, `RESOLVED`,
+and `CLOSED`.
+
+```bash
+curl -X PATCH http://localhost:3000/api/macropage-connect/support/tickets/6a6e4849b1c6f202a70d1826 \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"RESOLVED"}'
+```
 
 ## Modules — mr-fuels (`/api/mr-fuels/*`)
 
@@ -96,6 +124,20 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 | `ads` | `/ads`, `/ads/active` | Admin-owned. |
 | `stats` | `/stats/dashboard` | Totals from `admins`/`subscriptions`. |
 | `support/tickets`, `support/chat` | `/support/tickets`, Socket.io `/mr-fuels/support-chat` | Admin-owned. |
+
+### Update an MR Fuels plan
+
+`PATCH /api/mr-fuels/plans/:id` updates the plan identified by its MongoDB
+`_id`. It requires a super-admin JWT. Send only the fields that need changing;
+when updating a nested object such as `pricing`, provide that object's complete
+shape.
+
+```bash
+curl -X PATCH http://localhost:3000/api/mr-fuels/plans/<planMongoId> \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"description":"Updated plan description","pricing":{"originalPrice":2499,"finalPrice":1999,"currency":"INR","isFree":false}}'
+```
 
 ## Modules — macropage-portal (`/api/macropage-portal`)
 

@@ -4,7 +4,7 @@ import type { TicketPriority, TicketStatus } from '../schemas/ticket.schema';
 
 export class QueryTicketsDto extends PaginationDto {
   @IsOptional()
-  @IsEnum(['open', 'pending', 'resolved', 'closed'])
+  @IsEnum(['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED'])
   status?: TicketStatus;
 
   @IsOptional()
@@ -13,9 +13,5 @@ export class QueryTicketsDto extends PaginationDto {
 
   @IsOptional()
   @IsMongoId()
-  customerId?: string;
-
-  @IsOptional()
-  @IsMongoId()
-  assignedTo?: string;
+  tenantId?: string;
 }

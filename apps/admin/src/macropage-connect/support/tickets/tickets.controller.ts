@@ -1,15 +1,6 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Roles } from '../../../auth/decorators/roles.decorator';
 import { TicketsService } from './tickets.service';
-import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { QueryTicketsDto } from './dto/query-tickets.dto';
 
@@ -27,18 +18,9 @@ export class TicketsController {
     return this.ticketsService.findOne(id);
   }
 
-  @Post()
-  create(@Body() dto: CreateTicketDto) {
-    return this.ticketsService.create(dto);
-  }
-
   @Patch(':id')
+  @Roles('super-admin', 'support-agent')
   update(@Param('id') id: string, @Body() dto: UpdateTicketDto) {
     return this.ticketsService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ticketsService.remove(id);
   }
 }

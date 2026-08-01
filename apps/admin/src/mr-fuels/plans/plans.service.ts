@@ -12,7 +12,8 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 @Injectable()
 export class PlansService {
   constructor(
-    @InjectModel(Plan.name, 'mrFuels') private readonly planModel: Model<PlanDocument>,
+    @InjectModel(Plan.name, 'mrFuels')
+    private readonly planModel: Model<PlanDocument>,
     @InjectModel(ExternalSubscription.name, 'mrFuels')
     private readonly subscriptionModel: Model<ExternalSubscriptionDocument>,
   ) {}
@@ -35,7 +36,7 @@ export class PlansService {
 
   async update(id: string, dto: UpdatePlanDto) {
     const plan = await this.planModel
-      .findByIdAndUpdate(id, dto, { new: true })
+      .findByIdAndUpdate(id, dto, { new: true, runValidators: true })
       .exec();
     if (!plan) {
       throw new NotFoundException('Plan not found');

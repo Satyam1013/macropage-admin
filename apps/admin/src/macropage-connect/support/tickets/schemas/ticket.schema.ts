@@ -1,15 +1,26 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type TicketStatus = 'open' | 'pending' | 'resolved' | 'closed';
+export type TicketStatus =
+  'OPEN' | 'IN_PROGRESS' | 'PENDING' | 'RESOLVED' | 'CLOSED';
 export type TicketPriority = 'low' | 'medium' | 'high';
 
 export type TicketDocument = HydratedDocument<Ticket>;
 
-@Schema({ timestamps: true })
+/** Mirrors tickets created by the customer-facing Help module. */
+@Schema({ timestamps: true, collection: 'tickets' })
 export class Ticket {
-  @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
-  customerId: Types.ObjectId;
+  @Prop({ required: true })
+  tenantId: string;
+
+  @Prop({ required: true })
+  userId: string;
+
+  @Prop({ required: true, trim: true })
+  userName: string;
+
+  @Prop({ required: true, lowercase: true, trim: true })
+  userEmail: string;
 
   @Prop({ required: true, trim: true })
   subject: string;
@@ -19,8 +30,8 @@ export class Ticket {
 
   @Prop({
     required: true,
-    enum: ['open', 'pending', 'resolved', 'closed'],
-    default: 'open',
+    enum: ['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED'],
+    default: 'OPEN',
   })
   status: TicketStatus;
 
@@ -31,8 +42,8 @@ export class Ticket {
   })
   priority: TicketPriority;
 
-  @Prop({ type: Types.ObjectId, ref: 'AdminUser' })
-  assignedTo?: Types.ObjectId;
+  @Prop({ type: [String], default: [] })
+  attachments: string[];
 }
 
 export const TicketSchema = SchemaFactory.createForClass(Ticket);
