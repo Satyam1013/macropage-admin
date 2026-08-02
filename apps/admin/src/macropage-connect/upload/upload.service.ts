@@ -31,6 +31,10 @@ export class UploadService {
         secretAccessKey: this.config.get<string>('DO_SPACES_SECRET', ''),
       },
       forcePathStyle: false,
+      // DigitalOcean Spaces rejects the AWS SDK v3 default flexible-checksum
+      // trailer with "InvalidArgument" — only send checksums when required.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
