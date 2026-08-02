@@ -31,11 +31,16 @@ export class UploadService {
         secretAccessKey: this.config.get<string>('DO_SPACES_SECRET', ''),
       },
       forcePathStyle: false,
-      // DigitalOcean Spaces rejects the AWS SDK v3 default flexible-checksum
-      // trailer with "InvalidArgument" — only send checksums when required.
       requestChecksumCalculation: 'WHEN_REQUIRED',
       responseChecksumValidation: 'WHEN_REQUIRED',
     });
+
+    // S3Client hardcodes `requestChecksumRequired: true` for PutObject, so the
+    // WHEN_REQUIRED settings above are ignored and it still attaches an
+    // `x-amz-checksum-crc32` header — which DigitalOcean Spaces doesn't
+    // understand and rejects with "InvalidArgument". Strip the middleware
+    // that adds/validates flexible checksums entirely.
+    this.s3.middlewareStack.removeByTag('BODY_CHECKSUM');
   }
 
   async uploadTutorial(file: Express.Multer.File): Promise<{ url: string }> {
