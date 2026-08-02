@@ -1,6 +1,6 @@
 import { IsDateString, IsEnum, IsMongoId, IsOptional } from 'class-validator';
 
-export type StatsGroupBy = 'day' | 'month';
+export type StatsGroupBy = 'day' | 'week' | 'month';
 
 export class QueryMessageStatsDto {
   @IsOptional()
@@ -8,7 +8,7 @@ export class QueryMessageStatsDto {
   customerId?: string;
 
   @IsOptional()
-  @IsEnum(['day', 'month'])
+  @IsEnum(['day', 'week', 'month'])
   groupBy?: StatsGroupBy = 'day';
 
   @IsOptional()

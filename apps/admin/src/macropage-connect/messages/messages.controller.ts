@@ -16,4 +16,9 @@ export class MessagesController {
   getStats(@Query() query: QueryMessageStatsDto) {
     return this.messagesService.getStats(query);
   }
+
+  @Get('stats/customers')
+  getCustomerStats(@Query() query: QueryMessageStatsDto) {
+    return this.messagesService.getCustomerStats(query);
+  }
 }

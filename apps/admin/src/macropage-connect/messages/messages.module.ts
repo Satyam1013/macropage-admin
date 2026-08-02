@@ -4,6 +4,10 @@ import {
   ExternalMessage,
   ExternalMessageSchema,
 } from '../external/schemas/message.schema';
+import {
+  ExternalUser,
+  ExternalUserSchema,
+} from '../external/schemas/user.schema';
 import { MessagesService } from './messages.service';
 import { MessagesController } from './messages.controller';
 
@@ -11,6 +15,7 @@ import { MessagesController } from './messages.controller';
   imports: [
     MongooseModule.forFeature([
       { name: ExternalMessage.name, schema: ExternalMessageSchema },
+      { name: ExternalUser.name, schema: ExternalUserSchema },
     ]),
   ],
   controllers: [MessagesController],
