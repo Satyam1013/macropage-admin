@@ -20,4 +20,13 @@ export class UploadController {
     }
     return this.uploadService.uploadTutorial(file);
   }
+
+  @Post('image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded (field name: "file")');
+    }
+    return this.uploadService.uploadImage(file);
+  }
 }

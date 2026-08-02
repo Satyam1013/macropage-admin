@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
-import { TUTORIAL_TYPES } from './upload.constants';
+import { IMAGE_TYPES, TUTORIAL_TYPES } from './upload.constants';
 
 /**
  * Uploads tutorial media (images/video/pdf embedded in help docs) to the
@@ -46,6 +46,33 @@ export class UploadService {
 
     const ext = file.originalname.split('.').pop() ?? 'bin';
     const key = `admin-tutorials/${randomUUID()}.${ext}`;
+
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ACL: 'public-read',
+      }),
+    );
+
+    return { url: `${this.cdnBase}/${key}` };
+  }
+
+  /** General-purpose image upload (ad banners, etc.) — mirrors macropage-connect's `/upload/image`. */
+  async uploadImage(file: Express.Multer.File): Promise<{ url: string }> {
+    if (!IMAGE_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Only jpeg, png, webp, or gif images are allowed',
+      );
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      throw new BadRequestException('File must be under 10MB');
+    }
+
+    const ext = file.originalname.split('.').pop() ?? 'bin';
+    const key = `admin-images/${randomUUID()}.${ext}`;
 
     await this.s3.send(
       new PutObjectCommand({

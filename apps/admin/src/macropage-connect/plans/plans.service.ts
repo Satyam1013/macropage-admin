@@ -94,13 +94,40 @@ export class PlansService {
     return this.subscriptionModel.findOne({ tenantId }).lean().exec();
   }
 
-  /** Each Payment doc is one purchase/renewal event — this IS the plan history log. */
-  getPaymentHistory(tenantId: string) {
-    return this.paymentModel
-      .find({ tenantId })
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec();
+  /**
+   * Each Payment doc is one purchase/renewal event, but a tenant that never
+   * upgraded off the free TRIAL plan has zero Payment docs — so the history
+   * would otherwise come back empty. Synthesize a TRIAL entry from the
+   * Subscription doc (which every tenant has) so the free plan and its
+   * period still show up in the history.
+   */
+  async getPaymentHistory(tenantId: string) {
+    const [payments, subscription] = await Promise.all([
+      this.paymentModel
+        .find({ tenantId })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
+      this.subscriptionModel.findOne({ tenantId }).lean().exec(),
+    ]);
+
+    if (!subscription) {
+      return payments;
+    }
+
+    const trialEntry = {
+      tenantId,
+      plan: 'TRIAL',
+      status: subscription.status,
+      amount: 0,
+      currency: 'INR',
+      periodStart: subscription.currentPeriodStart ?? subscription.createdAt,
+      periodEnd: subscription.trialEndsAt ?? subscription.currentPeriodEnd,
+      createdAt: subscription.createdAt,
+      isFreePlan: true,
+    };
+
+    return [...payments, trialEntry];
   }
 
   countActiveSubscriptions() {
