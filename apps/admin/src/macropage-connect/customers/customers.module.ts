@@ -1,8 +1,15 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ExternalUser, ExternalUserSchema } from '../external/schemas/user.schema';
+import {
+  ExternalUser,
+  ExternalUserSchema,
+} from '../external/schemas/user.schema';
 import { CustomersService } from './customers.service';
 import { CustomersController } from './customers.controller';
+import {
+  ExternalContact,
+  ExternalContactSchema,
+} from '../external/schemas/contact.schema';
 import { PlansModule } from '../plans/plans.module';
 import { MessagesModule } from '../messages/messages.module';
 import { TagsModule } from '../tags/tags.module';
@@ -11,6 +18,7 @@ import { TagsModule } from '../tags/tags.module';
   imports: [
     MongooseModule.forFeature([
       { name: ExternalUser.name, schema: ExternalUserSchema },
+      { name: ExternalContact.name, schema: ExternalContactSchema },
     ]),
     PlansModule,
     MessagesModule,

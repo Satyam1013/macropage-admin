@@ -73,7 +73,7 @@ curl http://localhost:3000/api/mr-fuels/customers -H "Authorization: Bearer $TOK
 
 | Module | Routes | Notes |
 |---|---|---|
-| `customers` | `/customers`, `/customers/:id`, `/customers/:id/profile` | Read-only over real `users` (`role: OWNER`); profile aggregates subscription + payment history + message stats + tags. Auth fields always stripped. |
+| `customers` | `/customers`, `/customers/:id`, `/customers/:id/profile` | Read-only over real `users` (`role: OWNER`). List items include `totalMessages` and `totalContacts`; profile aggregates subscription + payment history + message stats + tags. Auth fields always stripped. The legacy `/api/customers` alias remains available for the deployed admin UI. |
 | `plans` | `/plans`, `PATCH /plans/:planId`, `/plans/customer/:tenantId`, `/plans/customer/:tenantId/current` | Pricing catalog with super-admin persisted overrides; read-only over real `subscriptions`/`payments`. |
 | `messages` | `/messages/logs`, `/messages/stats` | Read-only over real `messages`, `direction: OUTBOUND`; day/month/custom-range stats. |
 | `tags` | `/tags`, `/tags/assign` | Admin-owned. |

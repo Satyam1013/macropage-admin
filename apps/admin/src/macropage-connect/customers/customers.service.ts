@@ -6,6 +6,14 @@ import {
   ExternalUser,
   ExternalUserDocument,
 } from '../external/schemas/user.schema';
+import {
+  ExternalContact,
+  ExternalContactDocument,
+} from '../external/schemas/contact.schema';
+import {
+  ExternalMessage,
+  ExternalMessageDocument,
+} from '../external/schemas/message.schema';
 import { QueryCustomersDto } from './dto/query-customers.dto';
 import { PlansService } from '../plans/plans.service';
 import { MessagesService } from '../messages/messages.service';
@@ -21,6 +29,10 @@ export class CustomersService {
   constructor(
     @InjectModel(ExternalUser.name)
     private readonly userModel: Model<ExternalUserDocument>,
+    @InjectModel(ExternalContact.name)
+    private readonly contactModel: Model<ExternalContactDocument>,
+    @InjectModel(ExternalMessage.name)
+    private readonly messageModel: Model<ExternalMessageDocument>,
     private readonly plansService: PlansService,
     private readonly messagesService: MessagesService,
     private readonly tagsService: TagsService,
@@ -40,13 +52,11 @@ export class CustomersService {
     }
     if (billingPlan) filter.billingPlan = billingPlan;
     if (tagId) {
-      const customerIds = await this.tagsService.getCustomerIdsForTags([
-        tagId,
-      ]);
+      const customerIds = await this.tagsService.getCustomerIdsForTags([tagId]);
       filter._id = { $in: customerIds };
     }
 
-    return paginate(
+    const result = await paginate(
       this.userModel,
       filter,
       page,
@@ -54,6 +64,48 @@ export class CustomersService {
       { createdAt: -1 },
       SAFE_PROJECTION,
     );
+
+    const tenantIds = [
+      ...new Set(
+        result.items.map((customer) =>
+          String(customer.tenantId ?? (customer as ExternalUserDocument)._id),
+        ),
+      ),
+    ];
+
+    if (tenantIds.length === 0) {
+      return result;
+    }
+
+    const [messageCounts, contactCounts] = await Promise.all([
+      this.messageModel.aggregate<{ _id: string; count: number }>([
+        { $match: { tenantId: { $in: tenantIds } } },
+        { $group: { _id: '$tenantId', count: { $sum: 1 } } },
+      ]),
+      this.contactModel.aggregate<{ _id: string; count: number }>([
+        { $match: { tenantId: { $in: tenantIds } } },
+        { $group: { _id: '$tenantId', count: { $sum: 1 } } },
+      ]),
+    ]);
+    const messageCountsByTenant = new Map(
+      messageCounts.map(({ _id, count }) => [String(_id), count]),
+    );
+    const contactCountsByTenant = new Map(
+      contactCounts.map(({ _id, count }) => [String(_id), count]),
+    );
+
+    return {
+      ...result,
+      items: result.items.map((customer) => {
+        const customerDocument = customer as ExternalUserDocument;
+        const tenantId = String(customer.tenantId ?? customerDocument._id);
+        return {
+          ...customerDocument.toObject(),
+          totalMessages: messageCountsByTenant.get(tenantId) ?? 0,
+          totalContacts: contactCountsByTenant.get(tenantId) ?? 0,
+        };
+      }),
+    };
   }
 
   async findOne(id: string) {
