@@ -17,8 +17,9 @@ export class AdsService {
     return this.adModel.create(dto);
   }
 
-  findAll() {
-    return this.adModel.find().sort({ priority: -1 }).exec();
+  findAll(category?: string) {
+    const filter = category ? { category } : {};
+    return this.adModel.find(filter).sort({ priority: -1 }).exec();
   }
 
   async findOne(id: string) {

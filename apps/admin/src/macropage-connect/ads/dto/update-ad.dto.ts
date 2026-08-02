@@ -21,6 +21,14 @@ export class UpdateAdDto {
   mediaUrl?: string;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
   @IsEnum(['popup', 'banner', 'inline'])
   type?: AdType;
 

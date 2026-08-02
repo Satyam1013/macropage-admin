@@ -17,8 +17,8 @@ export class AdsController {
   constructor(private readonly adsService: AdsService) {}
 
   @Get()
-  findAll() {
-    return this.adsService.findAll();
+  findAll(@Query('category') category?: string) {
+    return this.adsService.findAll(category);
   }
 
   @Get('active')

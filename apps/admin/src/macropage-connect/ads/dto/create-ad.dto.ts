@@ -18,6 +18,13 @@ export class CreateAdDto {
   @IsString()
   mediaUrl: string;
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  category: string;
+
   @IsEnum(['popup', 'banner', 'inline'])
   type: AdType;
 
